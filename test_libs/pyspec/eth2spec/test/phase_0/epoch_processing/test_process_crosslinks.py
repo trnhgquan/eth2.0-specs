@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from eth2spec.test.context import spec_state_test, with_all_phases
+from eth2spec.test.context import spec_state_test, with_all_phases, with_phases
 from eth2spec.test.helpers.state import (
     next_epoch,
     next_slot
@@ -164,3 +164,34 @@ def test_tied_crosslink_between_epochs(spec, state):
     assert state.previous_crosslinks[shard] != state.current_crosslinks[shard]
     assert pre_crosslink != state.current_crosslinks[shard]
     assert state.current_crosslinks[shard] == prev_attestation.data.crosslink
+
+
+@with_phases(['phase1'])
+@spec_state_test
+def test_winning_crosslink_data_root_tie(spec, state):
+    """
+    Winning crosslink should tie-break on data-root.
+    """
+
+    # add attestation at start of next epoch
+    next_epoch(spec, state)
+
+    # add 3 equal attestations, all for the same slot, to tie-break on the data-root.
+    att1 = get_valid_attestation(spec, state, slot=state.slot - 3)
+    att1.data.crosslink.data_root = b'\xbb' * 32
+    sign_attestation(spec, state, att1)
+
+    att2 = get_valid_attestation(spec, state, slot=state.slot - 3)
+    att2.data.crosslink.data_root = b'\xcc' * 32
+    sign_attestation(spec, state, att2)
+
+    att3 = get_valid_attestation(spec, state, slot=state.slot - 3)
+    att3.data.crosslink.data_root = b'\xaa' * 32
+    sign_attestation(spec, state, att3)
+
+    assert att1.data.crosslink.shard == att2.data.crosslink.shard == att3.data.crosslink.shard
+    add_attestations_to_state(spec, state, [att1, att2, att3], state.slot)
+
+    yield from run_process_crosslinks(spec, state)
+
+    assert state.current_crosslinks[att1.data.crosslink.shard].data_root == b'\xcc' * 32
