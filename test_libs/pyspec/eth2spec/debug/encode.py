@@ -8,7 +8,7 @@ from eth2spec.utils.ssz.ssz_typing import (
 def encode(value, include_hash_tree_roots=False):
     if isinstance(value, uint):
         # Larger uints are boxed and the class declares their byte length
-        if value.type().byte_len > 8:
+        if value.__class__.type_byte_length() > 8:
             return str(int(value))
         return int(value)
     elif isinstance(value, boolean):

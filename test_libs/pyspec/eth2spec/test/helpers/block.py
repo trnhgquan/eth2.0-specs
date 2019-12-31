@@ -83,7 +83,7 @@ def build_empty_block(spec, state, slot=None):
     empty_block.body.eth1_data.deposit_count = state.eth1_deposit_index
     previous_block_header = deepcopy(state.latest_block_header)
     if previous_block_header.state_root == spec.Root():
-        previous_block_header.state_root = state.hash_tree_root()
+        previous_block_header.state_root = hash_tree_root(state)
     empty_block.parent_root = hash_tree_root(previous_block_header)
     apply_randao_reveal(spec, state, empty_block)
     return empty_block

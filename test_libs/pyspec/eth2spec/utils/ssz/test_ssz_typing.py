@@ -1,7 +1,7 @@
+from pymerkles.core import View, TypeDef, BasicView
 from .ssz_typing import (
-    SSZValue, SSZType, BasicValue, BasicType, Series, ElementsType,
-    Elements, bit, boolean, Container, List, Vector, ByteList, ByteVector,
-    byte, uint, uint8, uint16, uint32, uint64, uint128, uint256,
+    bit, boolean, Container, List, Vector,
+    byte, uint8, uint16, uint32, uint64, uint128, uint256,
     Bytes32, Bytes48
 )
 
@@ -15,38 +15,29 @@ def expect_value_error(fn, msg):
 
 
 def test_subclasses():
-    for u in [uint, uint8, uint16, uint32, uint64, uint128, uint256]:
-        assert issubclass(u, uint)
+    for u in [uint8, uint16, uint32, uint64, uint128, uint256]:
         assert issubclass(u, int)
-        assert issubclass(u, BasicValue)
-        assert issubclass(u, SSZValue)
-        assert isinstance(u, SSZType)
-        assert isinstance(u, BasicType)
-    assert issubclass(boolean, BasicValue)
-    assert isinstance(boolean, BasicType)
+        assert issubclass(u, View)
+        assert issubclass(u, BasicView)
+        assert isinstance(u, TypeDef)
+    assert issubclass(boolean, BasicView)
+    assert issubclass(boolean, View)
+    assert isinstance(boolean, TypeDef)
 
-    for c in [Container, List, Vector, ByteList, ByteVector]:
-        assert issubclass(c, Series)
-        assert issubclass(c, SSZValue)
-        assert isinstance(c, SSZType)
-        assert not issubclass(c, BasicValue)
-        assert not isinstance(c, BasicType)
-
-    for c in [List, Vector, ByteList, ByteVector]:
-        assert issubclass(c, Elements)
-        assert isinstance(c, ElementsType)
+    for c in [Container, List, Vector, Bytes32]:
+        assert not issubclass(c, View)
+        assert not isinstance(c, TypeDef)
 
 
 def test_basic_instances():
-    for u in [uint, uint8, byte, uint16, uint32, uint64, uint128, uint256]:
+    for u in [uint8, byte, uint16, uint32, uint64, uint128, uint256]:
         v = u(123)
-        assert isinstance(v, uint)
         assert isinstance(v, int)
-        assert isinstance(v, BasicValue)
-        assert isinstance(v, SSZValue)
+        assert isinstance(v, BasicView)
+        assert isinstance(v, View)
 
-    assert isinstance(boolean(True), BasicValue)
-    assert isinstance(boolean(False), BasicValue)
+    assert isinstance(boolean(True), BasicView)
+    assert isinstance(boolean(False), BasicView)
     assert isinstance(bit(True), boolean)
     assert isinstance(bit(False), boolean)
 
@@ -86,8 +77,7 @@ def test_container():
     assert empty.b == uint32(0)
 
     assert issubclass(Foo, Container)
-    assert issubclass(Foo, SSZValue)
-    assert issubclass(Foo, Series)
+    assert issubclass(Foo, View)
 
     assert Foo.is_fixed_size()
     x = Foo(a=uint8(123), b=uint32(45))
@@ -95,7 +85,7 @@ def test_container():
     assert x.b == 45
     assert isinstance(x.a, uint8)
     assert isinstance(x.b, uint32)
-    assert x.type().is_fixed_size()
+    assert x.__class__.is_fixed_size()
 
     class Bar(Container):
         a: uint8
@@ -108,12 +98,13 @@ def test_container():
     assert isinstance(y.a, uint8)
     assert len(y.b) == 2
     assert isinstance(y.a, uint8)
+    # noinspection PyTypeHints
     assert isinstance(y.b, List[uint8, 1024])
-    assert not y.type().is_fixed_size()
+    assert not y.__class__.is_fixed_size()
     assert y.b[0] == 1
     v: List = y.b
-    assert v.type().elem_type == uint8
-    assert v.type().length == 1024
+    assert v.__class__.elem_type == uint8
+    assert v.__class__.length == 1024
 
     y.a = 42
     try:
@@ -138,12 +129,10 @@ def test_container():
 def test_list():
     typ = List[uint64, 128]
     assert issubclass(typ, List)
-    assert issubclass(typ, SSZValue)
-    assert issubclass(typ, Series)
-    assert issubclass(typ, Elements)
-    assert isinstance(typ, ElementsType)
+    assert issubclass(typ, View)
+    assert isinstance(typ, TypeDef)
 
-    assert not typ.is_fixed_size()
+    assert not typ.is_fixed_byte_length()
 
     assert len(typ()) == 0  # empty
     assert len(typ(uint64(0))) == 1  # single arg
@@ -158,12 +147,11 @@ def test_list():
     assert isinstance(v[0], uint64)
 
     assert isinstance(v, List)
+    # noinspection PyTypeHints
     assert isinstance(v, List[uint64, 128])
+    # noinspection PyTypeHints
     assert isinstance(v, typ)
-    assert isinstance(v, SSZValue)
-    assert isinstance(v, Series)
-    assert issubclass(v.type(), Elements)
-    assert isinstance(v.type(), ElementsType)
+    assert isinstance(v, View)
 
     assert len(typ([i for i in range(10)])) == 10  # cast py list to SSZ list
 
@@ -203,17 +191,17 @@ def test_list():
 
 
 def test_bytesn_subclass():
-    assert isinstance(ByteVector[32](b'\xab' * 32), Bytes32)
-    assert not isinstance(ByteVector[32](b'\xab' * 32), Bytes48)
-    assert issubclass(ByteVector[32](b'\xab' * 32).type(), Bytes32)
-    assert issubclass(ByteVector[32], Bytes32)
+    assert isinstance(Vector[byte, 32](b'\xab' * 32), Bytes32)
+    assert not isinstance(Vector[byte, 32](b'\xab' * 32), Bytes48)
+    assert issubclass(Vector[byte, 32](b'\xab' * 32).__class__, Bytes32)
+    assert issubclass(Vector[byte, 32], Bytes32)
 
     class Root(Bytes32):
         pass
 
     assert isinstance(Root(b'\xab' * 32), Bytes32)
     assert not isinstance(Root(b'\xab' * 32), Bytes48)
-    assert issubclass(Root(b'\xab' * 32).type(), Bytes32)
+    assert issubclass(Root(b'\xab' * 32).__class__, Bytes32)
     assert issubclass(Root, Bytes32)
 
     assert not issubclass(Bytes48, Bytes32)
