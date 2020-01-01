@@ -122,7 +122,6 @@ test_data = [
      "03000000000000000000000000000000000000000000000000000000000000ff",
      h(h(chunk("01"), chunk("02")),
        h("03000000000000000000000000000000000000000000000000000000000000ff", chunk("")))),
-    ("emptyTestStruct", EmptyTestStruct(), "", chunk("")),
     ("singleFieldTestStruct", SingleFieldTestStruct(A=0xab), "ab", chunk("ab")),
     ("uint16 list", List[uint16, 32](uint16(0xaabb), uint16(0xc0ad), uint16(0xeeff)), "bbaaadc0ffee",
      h(h(chunk("bbaaadc0ffee"), chunk("")), chunk("03000000"))  # max length: 32 * 2 = 64 bytes = 2 chunks

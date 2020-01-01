@@ -2,7 +2,7 @@ from eth2spec.test.helpers.keys import privkeys
 from eth2spec.utils.bls import bls_sign, bls_aggregate_signatures
 from eth2spec.utils.hash_function import hash
 from eth2spec.utils.ssz.ssz_typing import Bitlist, ByteVector, Bitvector
-from eth2spec.utils.ssz.ssz_impl import chunkify, pack, hash_tree_root
+from eth2spec.utils.ssz.ssz_impl import hash_tree_root
 from eth2spec.utils.merkle_minimal import get_merkle_tree, get_merkle_proof
 
 BYTES_PER_CHUNK = 32
@@ -145,7 +145,7 @@ def get_valid_custody_response(spec, state, bit_challenge, custody_data, challen
     data_branch = get_merkle_proof(data_tree, chunk_index)
 
     bitlist_chunk_index = chunk_index // BYTES_PER_CHUNK
-    bitlist_chunks = chunkify(pack(bit_challenge.chunk_bits))
+    bitlist_chunks = None  # TODO chunkify(pack(bit_challenge.chunk_bits))
     bitlist_tree = get_merkle_tree(bitlist_chunks, pad_to=spec.MAX_CUSTODY_CHUNKS // 256)
     bitlist_chunk_branch = get_merkle_proof(bitlist_tree, chunk_index // 256) + \
         [len(bit_challenge.chunk_bits).to_bytes(32, "little")]
@@ -171,4 +171,4 @@ def get_custody_test_vector(bytelength):
 
 
 def get_custody_merkle_root(data):
-    return get_merkle_tree(chunkify(data))[-1][0]
+    return None  # get_merkle_tree(chunkify(data))[-1][0]
