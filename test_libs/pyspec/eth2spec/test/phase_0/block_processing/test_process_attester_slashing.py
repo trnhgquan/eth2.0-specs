@@ -258,7 +258,7 @@ def test_att2_bad_replaced_index(spec, state):
 def test_att1_duplicate_index_normal_signed(spec, state):
     attester_slashing = get_valid_attester_slashing(spec, state, signed_1=False, signed_2=True)
 
-    indices = attester_slashing.attestation_1.attesting_indices
+    indices = list(attester_slashing.attestation_1.attesting_indices)
     indices.pop(1)  # remove an index, make room for the additional duplicate index.
     attester_slashing.attestation_1.attesting_indices = sorted(indices)
 
@@ -278,7 +278,7 @@ def test_att1_duplicate_index_normal_signed(spec, state):
 def test_att2_duplicate_index_normal_signed(spec, state):
     attester_slashing = get_valid_attester_slashing(spec, state, signed_1=True, signed_2=False)
 
-    indices = attester_slashing.attestation_2.attesting_indices
+    indices = list(attester_slashing.attestation_2.attesting_indices)
     indices.pop(2)  # remove an index, make room for the additional duplicate index.
     attester_slashing.attestation_2.attesting_indices = sorted(indices)
 
@@ -298,7 +298,7 @@ def test_att2_duplicate_index_normal_signed(spec, state):
 def test_att1_duplicate_index_double_signed(spec, state):
     attester_slashing = get_valid_attester_slashing(spec, state, signed_1=False, signed_2=True)
 
-    indices = attester_slashing.attestation_1.attesting_indices
+    indices = list(attester_slashing.attestation_1.attesting_indices)
     indices.pop(1)  # remove an index, make room for the additional duplicate index.
     indices.append(indices[2])  # add one of the indices a second time
     attester_slashing.attestation_1.attesting_indices = sorted(indices)
@@ -313,7 +313,7 @@ def test_att1_duplicate_index_double_signed(spec, state):
 def test_att2_duplicate_index_double_signed(spec, state):
     attester_slashing = get_valid_attester_slashing(spec, state, signed_1=True, signed_2=False)
 
-    indices = attester_slashing.attestation_2.attesting_indices
+    indices = list(attester_slashing.attestation_2.attesting_indices)
     indices.pop(1)  # remove an index, make room for the additional duplicate index.
     indices.append(indices[2])  # add one of the indices a second time
     attester_slashing.attestation_2.attesting_indices = sorted(indices)
